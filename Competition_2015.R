@@ -76,7 +76,6 @@ DescriptionWordsTest$WordCount = eBayTest$WordCount
 
 # Remember that you can always look at the structure of these data frames to understand what we have created
 
-
 #Approach: Join variables with text variables. 
 Data_Train<-cbind(eBayTrain,DescriptionWordsTrain)
 Data_Test<-cbind(eBayTest,DescriptionWordsTest)
@@ -148,14 +147,43 @@ plot(perf)
 #AUC of the CART model 
 
 as.numeric(performance(pred, "auc")@y.values)
-
-
-
-#PROBLEMA-> FUCKING AUC DE 1 
-
+###################################################################################
 
 ####################################################################################
 #Approach 3 : Use a Tree!
+install.packages("gplots") 
+library(gplots)
+library(rpart)
+library(rpart.plot)
+library(rattle)
+library(rpart.plot)
+library(RColorBrewer)
+#Train Tree
+Tree<-rpart(sold~., data = train,method="class",minbucket=25)
+prp(Tree)
+fancyRpartPlot(Tree)
+#Predictions 
+PredictCART= predict(Tree,newdata=validate[-c(9)],type="class")
+
+#Test Tree 
+library(ROCR)
+predictROC=predict(Tree, newdata=validate[-c(9)], type="class") #Ignoring warning here
+pred=prediction(as.numeric(as.character(predictROC)),validate$sold)
+perf=performance(pred,"tpr","fpr")
+plot(perf)
+
+as.numeric(performance(pred, "auc")@y.values)
+
+
+#BUSCAR LA FORMA DE QUE SALGA LA PROBABILIDAD EN LO DE TREES.???
+
+
+#Submit Test Data Naive  #Not Was an Improvement from Logistic
+# Now we can prepare our submission file for Kaggle:
+TreeNaive<-rpart(sold~., data = Data_Train,method="class")
+PredTest = predict(TreeNaive, newdata=Data_Test, type="class") 
+MySubmission = data.frame(UniqueID = eBayTest$UniqueID, Probability1 = PredTest)
+write.csv(MySubmission, "SubmissionTree.csv", row.names=FALSE)
 
 
 
